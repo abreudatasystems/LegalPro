@@ -149,14 +149,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClient(client: InsertClient): Promise<Client> {
-    const [newClient] = await db.insert(clients).values(client).returning();
+    const clientData = {
+      ...client,
+      id: generateId(),
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+    };
+    const [newClient] = await db.insert(clients).values(clientData).returning();
     return newClient;
   }
 
   async updateClient(id: string, client: Partial<InsertClient>): Promise<Client> {
     const [updatedClient] = await db
       .update(clients)
-      .set({ ...client, updatedAt: new Date() })
+      .set({ ...client, updatedAt: toUnixTimestamp(new Date()) })
       .where(eq(clients.id, id))
       .returning();
     return updatedClient;
@@ -181,17 +187,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createContract(contract: InsertContract, userId: string): Promise<Contract> {
+    const contractData = {
+      ...contract,
+      id: generateId(),
+      createdBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+      startDate: contract.startDate ? toUnixTimestamp(contract.startDate) : null,
+      endDate: contract.endDate ? toUnixTimestamp(contract.endDate) : null,
+    };
     const [newContract] = await db
       .insert(contracts)
-      .values({ ...contract, createdBy: userId })
+      .values(contractData)
       .returning();
     return newContract;
   }
 
   async updateContract(id: string, contract: Partial<InsertContract>): Promise<Contract> {
+    const updateData = {
+      ...contract,
+      updatedAt: toUnixTimestamp(new Date()),
+      startDate: contract.startDate ? toUnixTimestamp(contract.startDate) : undefined,
+      endDate: contract.endDate ? toUnixTimestamp(contract.endDate) : undefined,
+    };
     const [updatedContract] = await db
       .update(contracts)
-      .set({ ...contract, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(contracts.id, id))
       .returning();
     return updatedContract;
@@ -219,9 +240,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createContractTemplate(template: InsertContractTemplate, userId: string): Promise<ContractTemplate> {
+    const templateData = {
+      ...template,
+      id: generateId(),
+      createdBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+    };
     const [newTemplate] = await db
       .insert(contractTemplates)
-      .values({ ...template, createdBy: userId })
+      .values(templateData)
       .returning();
     return newTemplate;
   }
@@ -229,7 +257,7 @@ export class DatabaseStorage implements IStorage {
   async updateContractTemplate(id: string, template: Partial<InsertContractTemplate>): Promise<ContractTemplate> {
     const [updatedTemplate] = await db
       .update(contractTemplates)
-      .set({ ...template, updatedAt: new Date() })
+      .set({ ...template, updatedAt: toUnixTimestamp(new Date()) })
       .where(eq(contractTemplates.id, id))
       .returning();
     return updatedTemplate;
@@ -237,7 +265,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContractTemplate(id: string): Promise<void> {
     await db.update(contractTemplates)
-      .set({ isActive: false })
+      .set({ isActive: 0 })
       .where(eq(contractTemplates.id, id));
   }
 
@@ -246,7 +274,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(contractClauses)
-      .where(eq(contractClauses.isActive, true))
+      .where(eq(contractClauses.isActive, 1))
       .orderBy(desc(contractClauses.createdAt));
   }
 
@@ -259,9 +287,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createContractClause(clause: InsertContractClause, userId: string): Promise<ContractClause> {
+    const clauseData = {
+      ...clause,
+      id: generateId(),
+      createdBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+    };
     const [newClause] = await db
       .insert(contractClauses)
-      .values({ ...clause, createdBy: userId })
+      .values(clauseData)
       .returning();
     return newClause;
   }
@@ -269,7 +304,7 @@ export class DatabaseStorage implements IStorage {
   async updateContractClause(id: string, clause: Partial<InsertContractClause>): Promise<ContractClause> {
     const [updatedClause] = await db
       .update(contractClauses)
-      .set({ ...clause, updatedAt: new Date() })
+      .set({ ...clause, updatedAt: toUnixTimestamp(new Date()) })
       .where(eq(contractClauses.id, id))
       .returning();
     return updatedClause;
@@ -277,7 +312,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContractClause(id: string): Promise<void> {
     await db.update(contractClauses)
-      .set({ isActive: false })
+      .set({ isActive: 0 })
       .where(eq(contractClauses.id, id));
   }
 
@@ -311,17 +346,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProject(project: InsertProject, userId: string): Promise<Project> {
+    const projectData = {
+      ...project,
+      id: generateId(),
+      createdBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+      startDate: project.startDate ? toUnixTimestamp(project.startDate) : null,
+      endDate: project.endDate ? toUnixTimestamp(project.endDate) : null,
+    };
     const [newProject] = await db
       .insert(projects)
-      .values({ ...project, createdBy: userId })
+      .values(projectData)
       .returning();
     return newProject;
   }
 
   async updateProject(id: string, project: Partial<InsertProject>): Promise<Project> {
+    const updateData = {
+      ...project,
+      updatedAt: toUnixTimestamp(new Date()),
+      startDate: project.startDate ? toUnixTimestamp(project.startDate) : undefined,
+      endDate: project.endDate ? toUnixTimestamp(project.endDate) : undefined,
+    };
     const [updatedProject] = await db
       .update(projects)
-      .set({ ...project, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(projects.id, id))
       .returning();
     return updatedProject;
@@ -342,17 +392,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction, userId: string): Promise<Transaction> {
+    const transactionData = {
+      ...transaction,
+      id: generateId(),
+      createdBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      date: transaction.date ? toUnixTimestamp(transaction.date) : toUnixTimestamp(new Date()),
+    };
     const [newTransaction] = await db
       .insert(transactions)
-      .values({ ...transaction, createdBy: userId })
+      .values(transactionData)
       .returning();
     return newTransaction;
   }
 
   async getMonthlyRevenue(): Promise<{ month: string; revenue: number }[]> {
-    // This is a simplified implementation - in a real app you'd use more sophisticated date handling
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const sixMonthsAgo = toUnixTimestamp(new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000));
     
     const result = await db
       .select({
@@ -398,9 +453,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDocument(document: InsertDocument, userId: string): Promise<Document> {
+    const documentData = {
+      ...document,
+      id: generateId(),
+      uploadedBy: userId,
+      createdAt: toUnixTimestamp(new Date()),
+      updatedAt: toUnixTimestamp(new Date()),
+    };
     const [newDocument] = await db
       .insert(documents)
-      .values({ ...document, uploadedBy: userId })
+      .values(documentData)
       .returning();
     return newDocument;
   }
@@ -408,7 +470,7 @@ export class DatabaseStorage implements IStorage {
   async updateDocument(id: string, document: Partial<InsertDocument>): Promise<Document> {
     const [updatedDocument] = await db
       .update(documents)
-      .set({ ...document, updatedAt: new Date() })
+      .set({ ...document, updatedAt: toUnixTimestamp(new Date()) })
       .where(eq(documents.id, id))
       .returning();
     return updatedDocument;
@@ -449,13 +511,15 @@ export class DatabaseStorage implements IStorage {
 
     const thisMonth = new Date();
     thisMonth.setDate(1);
+    const thisMonthTimestamp = toUnixTimestamp(thisMonth);
+    
     const [monthlyRevenueResult] = await db
       .select({ revenue: sum(transactions.amount) })
       .from(transactions)
       .where(
         and(
           eq(transactions.type, 'income'),
-          gte(transactions.date, thisMonth)
+          gte(transactions.date, thisMonthTimestamp)
         )
       );
 

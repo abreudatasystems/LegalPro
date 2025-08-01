@@ -1,6 +1,18 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeDatabase } from "./db";
+import fs from "fs";
+import path from "path";
+
+// Criar diretório de dados se não existir
+const dataDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Inicializar a base de dados
+initializeDatabase();
 
 const app = express();
 app.use(express.json());
