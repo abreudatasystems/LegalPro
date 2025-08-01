@@ -2,151 +2,139 @@ import { sql } from 'drizzle-orm';
 import {
   index,
   jsonb,
-  pgTable,
+  sqliteTable,
   timestamp,
   varchar,
   text,
   decimal,
-  pgEnum,
+  integer,
   boolean,
 } from "drizzle-orm/pg-core";
+import { text as sqliteText, integer as sqliteInteger, real } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Session storage table (mandatory for Replit Auth)
-export const sessions = pgTable(
+export const sessions = sqliteTable(
   "sessions",
   {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
+    sid: sqliteText("sid").primaryKey(),
+    sess: sqliteText("sess").notNull(),
+    expire: sqliteInteger("expire").notNull(),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User roles enum
-export const userRoleEnum = pgEnum('user_role', ['admin', 'lawyer', 'assistant']);
-
-// Contract status enum
-export const contractStatusEnum = pgEnum('contract_status', ['draft', 'active', 'completed', 'cancelled']);
-
-// Project status enum
-export const projectStatusEnum = pgEnum('project_status', ['planning', 'active', 'on_hold', 'completed', 'cancelled']);
-
-// Client type enum
-export const clientTypeEnum = pgEnum('client_type', ['individual', 'company']);
-
 // User storage table (mandatory for Replit Auth)
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  role: userRoleEnum("role").default('assistant'),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const users = sqliteTable("users", {
+  id: sqliteText("id").primaryKey(),
+  email: sqliteText("email").unique(),
+  firstName: sqliteText("first_name"),
+  lastName: sqliteText("last_name"),
+  profileImageUrl: sqliteText("profile_image_url"),
+  role: sqliteText("role").default('assistant'),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Clients table
-export const clients = pgTable("clients", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  email: varchar("email"),
-  phone: varchar("phone"),
-  address: text("address"),
-  type: clientTypeEnum("type").notNull().default('individual'),
-  companyDocument: varchar("company_document"), // CNPJ for companies
-  personalDocument: varchar("personal_document"), // CPF for individuals
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const clients = sqliteTable("clients", {
+  id: sqliteText("id").primaryKey(),
+  name: sqliteText("name").notNull(),
+  email: sqliteText("email"),
+  phone: sqliteText("phone"),
+  address: sqliteText("address"),
+  type: sqliteText("type").notNull().default('individual'),
+  companyDocument: sqliteText("company_document"), // CNPJ for companies
+  personalDocument: sqliteText("personal_document"), // CPF for individuals
+  notes: sqliteText("notes"),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Contracts table
-export const contracts = pgTable("contracts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title").notNull(),
-  description: text("description"),
-  clientId: varchar("client_id").references(() => clients.id),
-  value: decimal("value", { precision: 12, scale: 2 }),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
-  status: contractStatusEnum("status").notNull().default('draft'),
-  content: text("content"), // Full contract content
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const contracts = sqliteTable("contracts", {
+  id: sqliteText("id").primaryKey(),
+  title: sqliteText("title").notNull(),
+  description: sqliteText("description"),
+  clientId: sqliteText("client_id").references(() => clients.id),
+  value: real("value"),
+  startDate: sqliteInteger("start_date"),
+  endDate: sqliteInteger("end_date"),
+  status: sqliteText("status").notNull().default('draft'),
+  content: sqliteText("content"), // Full contract content
+  createdBy: sqliteText("created_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Contract templates (minutas)
-export const contractTemplates = pgTable("contract_templates", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  content: text("content").notNull(),
-  category: varchar("category"),
-  isActive: boolean("is_active").default(true),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const contractTemplates = sqliteTable("contract_templates", {
+  id: sqliteText("id").primaryKey(),
+  name: sqliteText("name").notNull(),
+  description: sqliteText("description"),
+  content: sqliteText("content").notNull(),
+  category: sqliteText("category"),
+  isActive: sqliteInteger("is_active").default(1),
+  createdBy: sqliteText("created_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Contract clauses
-export const contractClauses = pgTable("contract_clauses", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title").notNull(),
-  content: text("content").notNull(),
-  category: varchar("category"),
-  isActive: boolean("is_active").default(true),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const contractClauses = sqliteTable("contract_clauses", {
+  id: sqliteText("id").primaryKey(),
+  title: sqliteText("title").notNull(),
+  content: sqliteText("content").notNull(),
+  category: sqliteText("category"),
+  isActive: sqliteInteger("is_active").default(1),
+  createdBy: sqliteText("created_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Projects table
-export const projects = pgTable("projects", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  clientId: varchar("client_id").references(() => clients.id),
-  status: projectStatusEnum("status").notNull().default('planning'),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
-  assignedTo: varchar("assigned_to").references(() => users.id),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const projects = sqliteTable("projects", {
+  id: sqliteText("id").primaryKey(),
+  name: sqliteText("name").notNull(),
+  description: sqliteText("description"),
+  clientId: sqliteText("client_id").references(() => clients.id),
+  status: sqliteText("status").notNull().default('planning'),
+  startDate: sqliteInteger("start_date"),
+  endDate: sqliteInteger("end_date"),
+  assignedTo: sqliteText("assigned_to").references(() => users.id),
+  createdBy: sqliteText("created_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Financial transactions table
-export const transactions = pgTable("transactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  description: varchar("description").notNull(),
-  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  type: varchar("type").notNull(), // 'income' or 'expense'
-  clientId: varchar("client_id").references(() => clients.id),
-  projectId: varchar("project_id").references(() => projects.id),
-  contractId: varchar("contract_id").references(() => contracts.id),
-  date: timestamp("date").defaultNow(),
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
+export const transactions = sqliteTable("transactions", {
+  id: sqliteText("id").primaryKey(),
+  description: sqliteText("description").notNull(),
+  amount: real("amount").notNull(),
+  type: sqliteText("type").notNull(), // 'income' or 'expense'
+  clientId: sqliteText("client_id").references(() => clients.id),
+  projectId: sqliteText("project_id").references(() => projects.id),
+  contractId: sqliteText("contract_id").references(() => contracts.id),
+  date: sqliteInteger("date"),
+  createdBy: sqliteText("created_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
 });
 
 // Documents table
-export const documents = pgTable("documents", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  type: varchar("type").notNull(),
-  filePath: varchar("file_path"),
-  clientId: varchar("client_id").references(() => clients.id),
-  projectId: varchar("project_id").references(() => projects.id),
-  contractId: varchar("contract_id").references(() => contracts.id),
-  status: varchar("status").default('active'), // 'active', 'archived', 'draft'
-  uploadedBy: varchar("uploaded_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const documents = sqliteTable("documents", {
+  id: sqliteText("id").primaryKey(),
+  name: sqliteText("name").notNull(),
+  type: sqliteText("type").notNull(),
+  filePath: sqliteText("file_path"),
+  clientId: sqliteText("client_id").references(() => clients.id),
+  projectId: sqliteText("project_id").references(() => projects.id),
+  contractId: sqliteText("contract_id").references(() => contracts.id),
+  status: sqliteText("status").default('active'), // 'active', 'archived', 'draft'
+  uploadedBy: sqliteText("uploaded_by").references(() => users.id),
+  createdAt: sqliteInteger("created_at"),
+  updatedAt: sqliteInteger("updated_at"),
 });
 
 // Relations

@@ -25,7 +25,22 @@ import {
   type InsertDocument,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, sum, gte, lte } from "drizzle-orm";
+import { eq, desc, and, count, sum, gte, lte, sql } from "drizzle-orm";
+
+// Helper function to generate UUID
+function generateId(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// Helper function to convert Date to Unix timestamp
+function toUnixTimestamp(date: Date): number {
+  return Math.floor(date.getTime() / 1000);
+}
+
+// Helper function to convert Unix timestamp to Date
+function fromUnixTimestamp(timestamp: number): Date {
+  return new Date(timestamp * 1000);
+}
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
